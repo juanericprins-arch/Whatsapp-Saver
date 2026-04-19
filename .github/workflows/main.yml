@@ -13,12 +13,22 @@ jobs:
           cache: gradle
       - name: Build with Gradle
         run: |
-          ZIP_FILE=$(find . -name "*.zip" | head -n 1)
-          unzip "$ZIP_FILE"
+          # Find the zip file anywhere in the repository
+          ZIP_PATH=$(find . -name "*.zip" | head -n 1)
+          if [ -z "$ZIP_PATH" ]; then
+            echo "Error: ZIP file not found!"
+            exit 1
+          fi
+          echo "Found ZIP at: $ZIP_PATH"
+          unzip -o "$ZIP_PATH" -d .
+          
+          # Find where gradlew is located and move to that folder
+          GRADLEW_DIR=$(find . -name "gradlew" -exec dirname {} \; | head -n 1)
+          cd "$GRADLEW_DIR"
           chmod +x gradlew
           ./gradlew assembleDebug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: WhatsAppSaver-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: "**/app/build/outputs/apk/debug/app-debug.apk"
